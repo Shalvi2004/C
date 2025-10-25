@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-
+import bcrypt from "bcrypt";
 
 const userSchema = mongoose.Schema({
-    name: {
+    userName: {
         type: String,
         required: true,
         trim: true
@@ -19,5 +19,20 @@ const userSchema = mongoose.Schema({
         minlength: 6
     }
 }, { timestamps: true });
+
+// Before saving the user, hash the password if it has been modified
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) {
+        return next();
+    }
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 export const User = mongoose.model("User",userSchema);
