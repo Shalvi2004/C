@@ -51,7 +51,7 @@ const Register = () => {
                 setError(data.message || 'Registration failed.');
             }
         } catch (err) {
-            setError('Network error. Please try again.');
+            setError('Network error. Please try again.', err);
         }
 
         // Simulate a successful registration delay for demonstration
