@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
+import {useNavigate } from 'react-router-dom';
 
 
 const CreateToken = () => {
+  const navigate = useNavigate();
+    const handleGenearte=()=>{
+      navigate("/GeneratedToken")
+    }
+
   // State to hold the token form data
   const [tokenData, setTokenData] = useState({
-    description: '',
+    Participant: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -47,21 +53,21 @@ const CreateToken = () => {
         <form onSubmit={handleSubmit} className='space-y-6'>
           {/* Description */}
           <div>
-            <label htmlFor='description' className='block text-sm font-medium text-gray-700 mb-1'>Description</label>
+            <label htmlFor='description' className='block text-sm font-medium text-gray-700 mb-1'>Participant</label>
             <textarea
               id='description'
               name='description'
-              value={tokenData.description}
               onChange={handleChange}
               rows='4'
-              placeholder='A brief description of the token’s purpose and utility.'
-              className='w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-sm resize-none'
+              placeholder='No.of participant'
+              className='w-full  border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-sm resize-none'
             />
           </div>
 
           {/* Submit Button */}
           <button
             type='submit'
+            onClick={handleGenearte}
             disabled={isLoading}
             className='w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex justify-center items-center space-x-2'
           >
@@ -75,7 +81,7 @@ const CreateToken = () => {
                 Processing...
               </>
             ) : (
-              'Create Token'
+              'Genearate Token'
             )}
           </button>
         </form>

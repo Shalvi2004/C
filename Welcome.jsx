@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import {useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Welcome = () => {
     // State to control animation classes after component mounts
     const [animateHero, setAnimateHero] = useState(false);
     const navigate = useNavigate();
+
+    // Function to navigate to the main chat page (Community)
+    const handleStarted = () => {
+        // Standardized path to lowercase: /Main -> /main
+        navigate('/main'); 
+    };
     
-    // Function to navigate to the main chat page
-    const handleStarted=()=>{
-        navigate('/Main');
-    }
+    // Function to navigate to the login page
+    const handleLogin = () => {
+        navigate("/login");
+    };
+    
+    // Function to navigate to the register page
+    const handleRegister = () => {
+        // Standardized path to lowercase: /Register -> /register
+        navigate("/register");
+    };
 
     useEffect(() => {
-        // Trigger animations after component mounts
+        // Trigger animations after component mounts with a slight delay
         const timer = setTimeout(() => {
             setAnimateHero(true);
         }, 100); 
@@ -32,36 +44,50 @@ const Welcome = () => {
                         ChatWeb
                     </div>
                     
-                    {/* Nav Links (Right side) */}
+                    {/* Nav Links and Buttons (Right side) */}
                     <div className="flex items-center space-x-6">
                         <ul className="hidden md:flex space-x-6 text-gray-600 font-semibold">
                             {['Home', 'About us', 'Work', 'Info'].map((item, index) => (
                                 <li 
                                     key={item}
+                                    // Removed redundant 'text-xl' class and improved delay application
                                     className={`
-                                        text-xl transition-all duration-500 ease-out 
-                                        ${index === 0 ? 'delay-100' : index === 1 ? 'delay-200' : index === 2 ? 'delay-300' : 'delay-500'}
+                                        transition-all duration-500 ease-out 
                                         ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}
                                     `}
+                                    style={{ transitionDelay: `${100 + index * 100}ms` }} // Using inline style for dynamic delay
                                 >
-                                    <a href={`#${item.toLowerCase().replace(' ', '')}`} className="hover:text-indigo-600 transition duration-150">
+                                    <a href={`#${item.toLowerCase().replace(' ', '')}`} className="hover:text-red-500 transition duration-150">
                                         {item}
                                     </a>
                                 </li>
                             ))}
                         </ul>
                         
-                        {/* Get Started Button - Animates last */}
+                        {/* Login Button */}
                         <button 
-                            onClick={handleStarted}
+                            onClick={handleLogin} // Corrected function name to handleLogin for consistency
                             className={`
                                 px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-full shadow-lg 
                                 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50
-                                transition-all duration-500 ease-out delay-500
-                                ${animateHero ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}
+                                transition-all duration-500 ease-out 
+                                ${animateHero ? 'scale-100 opacity-100 delay-500' : 'scale-90 opacity-0 delay-0'} 
                             `}
                         >
-                            Get Started
+                            Login
+                        </button>
+                        
+                        {/* Register Button */}
+                        <button 
+                            onClick={handleRegister}
+                            className={`
+                                px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-full shadow-lg 
+                                hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50
+                                transition-all duration-500 ease-out 
+                                ${animateHero ? 'scale-100 opacity-100 delay-[600ms]' : 'scale-90 opacity-0 delay-0'} 
+                            `}
+                        >
+                            Register
                         </button>
                     </div>
                 </div>
@@ -78,7 +104,7 @@ const Welcome = () => {
                         <div 
                             className={`
                                 lg:w-1/2 max-w-lg lg:text-left text-center 
-                                transition-all duration-700 ease-out 
+                                transition-all duration-700 ease-out delay-100
                                 ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}
                             `}
                         >
@@ -95,11 +121,11 @@ const Welcome = () => {
                                 className={`
                                     px-8 py-3 bg-red-500 text-white text-base font-semibold rounded-lg shadow-xl 
                                     hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300
-                                    transition-all duration-700 ease-out delay-300
-                                    ${animateHero ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}
+                                    transition-all duration-700 ease-out 
+                                    ${animateHero ? 'scale-100 opacity-100 delay-500' : 'scale-95 opacity-0 delay-0'} 
                                 `}
                             >
-                                Started
+                                Get Started
                             </button>
                         </div>
 
@@ -107,7 +133,7 @@ const Welcome = () => {
                         <div 
                             className={`
                                 lg:w-1/2 flex justify-center lg:justify-end 
-                                transition-all duration-700 ease-out delay-200
+                                transition-all duration-700 ease-out delay-300
                                 ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}
                             `}
                         >
