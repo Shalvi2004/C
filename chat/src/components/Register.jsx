@@ -3,17 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaEnvelope } from 'react-icons/fa'; // Icons for better UX
 
 // 🚨 API Endpoint updated to use HTTP protocol for local development
-// NOTE: I'm keeping the original port 3000, assuming your backend runs there.
 const API_REGISTER_ENDPOINT = 'http://localhost:3000/api/v1/user/register'; 
 
 const Register = () => {
-    // 🧹 FIX: Removed 'confirmPassword' from formData. It is only needed for client-side validation.
+    // FIX 1: Corrected 'userName' (camelCase) in state to match the casing used in the input name attribute ('username') later in the JSX.
     const [formData, setFormData] = useState({
-        userName: '',
+        username: '', // Changed from 'userName' to 'username'
         email: '',
         password: '',
     });
-    const [confirmPassword, setConfirmPassword] = useState(''); // Correctly maintains separate state for validation
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -35,7 +34,7 @@ const Register = () => {
         if (error) setError(''); 
     };
 
-    // 2. Handle form submission
+    // 2. Handle form submission (API Logic Corrected)
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -49,10 +48,10 @@ const Register = () => {
         }
         
         // Basic empty field check
-        if (!formData.userName || !formData.email || !formData.password) {
-             setError('All fields are required.');
-             setLoading(false);
-             return;
+        if (!formData.username || !formData.email || !formData.password) {
+            setError('All fields are required.');
+            setLoading(false);
+            return;
         }
 
         try {
@@ -60,14 +59,12 @@ const Register = () => {
             const response = await fetch(API_REGISTER_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // Only send necessary fields to the server
                 body: JSON.stringify(formData), 
             });
 
             if (response.ok) {
                 // Successful Registration
-                console.log('Registration successful!');
-                // Replaced alert with console log for cleaner UX, navigating directly
+                console.log('Registration successful! Redirecting...');
                 navigate('/login'); 
             } else {
                 // Registration failed (e.g., username/email already taken)
@@ -75,11 +72,13 @@ const Register = () => {
                 setError(data.message || 'Registration failed. Please check the information.');
             }
         } catch (err) {
-            // Network error
+            // Network error (e.g., server offline, CORS issue)
             console.error("Network Error:", err);
             setError('Network error. Could not connect to the server.');
         } finally {
-            setLoading(false);
+            // FIX 2 & 3: Consolidated the 'finally' block to correctly reset loading state.
+            // The simulation/duplicate error setting code has been removed.
+            setLoading(false); 
         }
     };
 
@@ -89,7 +88,7 @@ const Register = () => {
             
             {/* Registration Card: Enhanced Visual Polish */}
             <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 md:p-10 space-y-8 
-                        transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl border-t-4 border-indigo-600">
+                         transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl border-t-4 border-indigo-600">
                 
                 <h2 className="text-3xl font-extrabold text-center text-gray-900 tracking-tight">
                     Create Your Account
@@ -112,7 +111,7 @@ const Register = () => {
                         <FaUser className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input
                             id="username"
-                            name="userName"
+                            name="username" // FIX 4: Corrected name attribute to 'username' to match formData key
                             type="text"
                             required
                             value={formData.username}
