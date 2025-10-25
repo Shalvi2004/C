@@ -2,6 +2,11 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import connectDB from './database/db.js';
+
+//Importing Routes
+import userRoutes from "./routes/user.routes.js";
+
 
 //Initiasing App
 const app = express();
@@ -12,6 +17,7 @@ dotenv.config();
 
 // Parse JSON bodies
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Simple request logger to help debug incoming API calls
 app.use((req, res, next) => {
@@ -25,6 +31,7 @@ app.get("/", (req, res) => {
   });
 });
 
+
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -32,7 +39,20 @@ app.use(
   })
 );
 
+//Using Routes:
+app.use("/api/v1/user", userRoutes);
+
 const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`✅ Backend Server is running on port ${PORT}`);
-});
+
+// Start server only after successful DB connection
+(async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`✅ Backend Server is running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Server startup aborted due to DB connection failure');
+    process.exit(1);
+  }
+})();
