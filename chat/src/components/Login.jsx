@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { FaLock, FaUser } from 'react-icons/fa';
 
 // 🚨 IMPORTANT: Replace this with your actual backend login endpoint!
-const API_LOGIN_ENDPOINT = 'YOUR_BACKEND_API_URL/api/login';
+const API_LOGIN_ENDPOINT = 'http://localhost:3000/api/v1/user/login';
 
 const Login = () => {
     const [formData, setFormData] = useState({
-        username: '',
+        userName: '',
         password: '',
     });
     const [error, setError] = useState('');
@@ -30,7 +30,7 @@ const Login = () => {
         setLoading(true);
         setError('');
 
-        if (!formData.username || !formData.password) {
+        if (!formData.userName || !formData.password) {
             setError('Please enter both username and password.');
             setLoading(false);
             return;
@@ -104,7 +104,7 @@ const Login = () => {
                             name="username"
                             type="text"
                             required
-                            value={formData.username}
+                            value={formData.userName}
                             onChange={handleChange}
                             placeholder="Username"
                             className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 

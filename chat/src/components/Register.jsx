@@ -2,13 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaEnvelope } from 'react-icons/fa'; // Icons for better UX
 
+// 🚨 API Endpoint updated to use HTTP protocol for local development
+// NOTE: I'm keeping the original port 3000, assuming your backend runs there.
+const API_REGISTER_ENDPOINT = 'http://localhost:3000/api/v1/user/register'; 
+
 const Register = () => {
+    // 🧹 FIX: Removed 'confirmPassword' from formData. It is only needed for client-side validation.
     const [formData, setFormData] = useState({
-        username: '',
+        userName: '',
         email: '',
         password: '',
-        // confirmPassword: '',
     });
+    const [confirmPassword, setConfirmPassword] = useState(''); // Correctly maintains separate state for validation
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -16,11 +21,17 @@ const Register = () => {
 
     // 1. Handle input changes and update state
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-        // Clear error when user starts typing
+        const { name, value } = e.target;
+        
+        if (name === 'confirmPassword') {
+            setConfirmPassword(value);
+        } else {
+            setFormData({
+                ...formData,
+                [name]: value,
+            });
+        }
+        
         if (error) setError(''); 
     };
 
@@ -30,77 +41,93 @@ const Register = () => {
         setLoading(true);
         setError('');
 
-        // Basic validation
-        if (formData.password !== formData.confirmPassword) {
+        // Client-side validation for password match
+        if (formData.password !== confirmPassword) {
             setError('Passwords do not match.');
             setLoading(false);
             return;
         }
+        
+        // Basic empty field check
+        if (!formData.userName || !formData.email || !formData.password) {
+             setError('All fields are required.');
+             setLoading(false);
+             return;
+        }
 
         try {
-            const response = await fetch('/api/register', {
+            // 🚀 Actual API Call
+            const response = await fetch(API_REGISTER_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                // Only send necessary fields to the server
+                body: JSON.stringify(formData), 
             });
 
             if (response.ok) {
-                navigate('/login'); // Navigate to login after successful registration
+                // Successful Registration
+                console.log('Registration successful!');
+                // Replaced alert with console log for cleaner UX, navigating directly
+                navigate('/login'); 
             } else {
+                // Registration failed (e.g., username/email already taken)
                 const data = await response.json();
-                setError(data.message || 'Registration failed.');
+                setError(data.message || 'Registration failed. Please check the information.');
             }
         } catch (err) {
-            setError('Network error. Please try again.');
-        }
-
-        // Simulate a successful registration delay for demonstration
-        setTimeout(() => {
-            console.log("Registration Attempt:", formData);
+            // Network error
+            console.error("Network Error:", err);
+            setError('Network error. Could not connect to the server.');
+        } finally {
             setLoading(false);
-            alert("Registration successful! Redirecting to login.");
-            navigate('/login'); 
-        }, 1500); 
+        }
     };
 
     return (
-        // Main container: full screen, centered content
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        // Main container: Enhanced gradient background for attractiveness
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-100 to-purple-50">
             
-            {/* Registration Card */}
-            <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-8 transform transition-all duration-300 hover:shadow-3xl">
+            {/* Registration Card: Enhanced Visual Polish */}
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 md:p-10 space-y-8 
+                        transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl border-t-4 border-indigo-600">
                 
-                <h2 className="text-3xl font-extrabold text-center text-gray-900">
+                <h2 className="text-3xl font-extrabold text-center text-gray-900 tracking-tight">
                     Create Your Account
                 </h2>
+                <p className="text-center text-sm text-gray-500">
+                    Join the community in just a few clicks!
+                </p>
                 
-                {/* Error Display */}
+                {/* Error Display: Enhanced visibility */}
                 {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                        <span className="block sm:inline">{error}</span>
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-r-lg shadow-md animate-pulse" role="alert">
+                        <span className="font-medium">{error}</span>
                     </div>
                 )}
 
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                <form className="space-y-6" onSubmit={handleSubmit}>
                     
-                    {/* Username Field */}
-                    <div className="relative">
-                        <FaUser className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
+                    {/* Username Field: Interactive Input */}
+                    <div className="relative group">
+                        <FaUser className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input
                             id="username"
-                            name="username"
+                            name="userName"
                             type="text"
                             required
                             value={formData.username}
                             onChange={handleChange}
                             placeholder="Username"
-                            className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
+                                       border border-gray-300 placeholder-gray-500 text-gray-900 
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
+                                       transition-all duration-200 shadow-sm hover:border-indigo-400"
                         />
                     </div>
 
-                    {/* Email Field */}
-                    <div className="relative">
-                        <FaEnvelope className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
+                    {/* Email Field: Interactive Input */}
+                    <div className="relative group">
+                        <FaEnvelope className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input
                             id="email"
                             name="email"
@@ -109,13 +136,16 @@ const Register = () => {
                             value={formData.email}
                             onChange={handleChange}
                             placeholder="Email address"
-                            className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
+                                       border border-gray-300 placeholder-gray-500 text-gray-900 
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
+                                       transition-all duration-200 shadow-sm hover:border-indigo-400"
                         />
                     </div>
 
-                    {/* Password Field */}
-                    <div className="relative">
-                        <FaLock className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
+                    {/* Password Field: Interactive Input */}
+                    <div className="relative group">
+                        <FaLock className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input
                             id="password"
                             name="password"
@@ -124,46 +154,63 @@ const Register = () => {
                             value={formData.password}
                             onChange={handleChange}
                             placeholder="Password"
-                            className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
+                                       border border-gray-300 placeholder-gray-500 text-gray-900 
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
+                                       transition-all duration-200 shadow-sm hover:border-indigo-400"
                         />
                     </div>
 
-                    {/* Confirm Password Field */}
-                    {/* <div className="relative">
-                        <FaLock className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
+                    {/* Confirm Password Field: Interactive Input */}
+                    <div className="relative group">
+                        <FaLock className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input
                             id="confirmPassword"
                             name="confirmPassword"
                             type="password"
                             required
-                            value={formData.confirmPassword}
+                            value={confirmPassword}
                             onChange={handleChange}
                             placeholder="Confirm Password"
-                            className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
+                                       border border-gray-300 placeholder-gray-500 text-gray-900 
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
+                                       transition-all duration-200 shadow-sm hover:border-indigo-400"
                         />
-                    </div> */}
+                    </div>
 
-                    {/* Submit Button */}
+                    {/* Submit Button: Enhanced with Loader */}
                     <button
                         type="submit"
                         disabled={loading}
                         className={`
-                            group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                            ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}
-                            transition duration-150 ease-in-out
+                            group relative w-full flex justify-center py-3 px-4 mt-6
+                            text-base font-semibold rounded-lg shadow-lg 
+                            transform transition-all duration-200 ease-in-out
+                            ${loading 
+                                ? 'bg-indigo-400 cursor-not-allowed text-gray-200' 
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-indigo-300'}
                         `}
                     >
-                        {loading ? 'Registering...' : 'Register'}
+                        {loading ? (
+                            <div className="flex items-center">
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Registering...
+                            </div>
+                        ) : 'Create Account'}
                     </button>
                 </form>
 
                 {/* Link to Login */}
-                <div className="text-sm text-center">
+                <div className="text-sm text-center pt-4">
                     <span className="font-medium text-gray-600">
                         Already have an account?{' '}
                         <button
                             onClick={() => navigate('/login')}
-                            className="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors duration-150"
+                            className="text-indigo-600 hover:text-indigo-800 font-bold transition-colors duration-150"
                         >
                             Log in
                         </button>
