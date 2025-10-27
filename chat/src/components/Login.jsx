@@ -7,7 +7,8 @@ const API_LOGIN_ENDPOINT = 'http://localhost:3000/api/v1/user/login';
 
 const Login = () => {
     const [formData, setFormData] = useState({
-        userName: '',
+        // FIX 1: Standardized the state key to 'username' (lowercase)
+        email: '', 
         password: '',
     });
     const [error, setError] = useState('');
@@ -30,8 +31,8 @@ const Login = () => {
         setLoading(true);
         setError('');
 
-        if (!formData.userName || !formData.password) {
-            setError('Please enter both username and password.');
+        if (!formData.email || !formData.password) {
+            setError('Please enter both email and password.');
             setLoading(false);
             return;
         }
@@ -42,7 +43,6 @@ const Login = () => {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    // You might add an Authorization header here later for token refresh, but not for initial login
                 },
                 // Send username and password in the request body
                 body: JSON.stringify(formData), 
@@ -54,13 +54,11 @@ const Login = () => {
                 // Successful Login (HTTP Status 200-299)
                 console.log('Login successful. Received data:', data);
                 
-                // 🔑 You must save the authentication token/user data here!
-                // Example: localStorage.setItem('authToken', data.token);
+                // 🔑 SUCCESS: Save authentication token here (e.g., localStorage.setItem('authToken', data.token);)
                 
                 navigate('/main'); // Redirect to the community page
             } else {
                 // Failed Login (HTTP Status 400 or 500)
-                // Display the error message returned from the server
                 setError(data.message || 'Login failed. Please check your credentials.');
             }
         } catch (err) {
@@ -76,9 +74,9 @@ const Login = () => {
         // Main container: full screen, radial gradient background
         <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-100 to-purple-50">
             
-            {/* Login Card */}
+            {/* Login Card (Attractive Styling Maintained) */}
             <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 md:p-10 space-y-8 
-                        transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl border-t-4 border-indigo-600">
+                         transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl border-t-4 border-indigo-600">
                 
                 <h2 className="text-3xl font-extrabold text-center text-gray-900 tracking-tight">
                     Welcome Back!
@@ -96,17 +94,17 @@ const Login = () => {
 
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     
-                    {/* Username Field */}
+                    {/* Username Field (Interactive Input) */}
                     <div className="relative group">
                         <FaUser className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input
-                            id="username"
-                            name="username"
+                            id="email"
+                            name="email" // FIX 2: Corrected the name attribute to 'username' (lowercase)
                             type="text"
                             required
-                            value={formData.userName}
+                            value={formData.email}
                             onChange={handleChange}
-                            placeholder="Username"
+                            placeholder="email"
                             className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
                                        border border-gray-300 placeholder-gray-500 text-gray-900 
                                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
@@ -114,7 +112,7 @@ const Login = () => {
                         />
                     </div>
 
-                    {/* Password Field */}
+                    {/* Password Field (Interactive Input) */}
                     <div className="relative group">
                         <FaLock className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input

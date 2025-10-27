@@ -4,7 +4,7 @@ import {useNavigate } from 'react-router-dom';
 
 const CreateToken = () => {
   const navigate = useNavigate();
-    const handleGenearte=()=>{
+    const handleGenerated=()=>{
       navigate("/GeneratedToken")
     }
 
@@ -34,7 +34,7 @@ const CreateToken = () => {
       setIsLoading(false);
       alert(`Token creation initiated!`);
       // Optionally reset form: setTokenData({ name: '', symbol: '', supply: '', description: '' });
-    }, 2000);
+    }, 100);
   };
 
   return (
@@ -67,7 +67,7 @@ const CreateToken = () => {
           {/* Submit Button */}
           <button
             type='submit'
-            onClick={handleGenearte}
+            onClick={handleGenerated}
             disabled={isLoading}
             className='w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex justify-center items-center space-x-2'
           >

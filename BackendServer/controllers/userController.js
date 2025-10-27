@@ -61,7 +61,7 @@ export const loginUser = async (req, res) => {
 
         // Return sanitized user (exclude password)
         const { _id, userName } = user;
-        console.log(user);
+        // console.log(user);
         return res.status(200).json({
             message: 'Login Successful',
             user: { id: _id, userName, email: user.email },

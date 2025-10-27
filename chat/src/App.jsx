@@ -6,7 +6,7 @@ import CreateToken from './components/CreateToken';
 // import Private from './components/Private'; // Unused component, check if it's needed
 import Chat from './components/Chat';
 import TechTalk from './components/TechTalk';
-// import GeneratedToken from './components/GeneratedToken'; // Fixed typo
+import GeneratedToken from './components/GeneratedToken';
 import Login from './components/Login';
 import Register from './components/Register';
 
@@ -19,7 +19,7 @@ const App = () => {
        
         <Route path="/community/general-chat" element={<Chat />} /> 
         <Route path="/community/tech-talk" element={<TechTalk />} />  
-        {/* <Route path="/GeneratedToken" element={<GeneratedToken />} />  */}
+        <Route path="/GeneratedToken" element={<GeneratedToken />} /> 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
