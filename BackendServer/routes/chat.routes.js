@@ -1,9 +1,10 @@
 import Router from 'express';
+import { chatController } from '../controllers/chatController.js';
 
 const router = Router();
 
-router.get('/test', (req, res) => {
-    res.status(200).json({ message: 'Chat route is working' });
-});
+router.get('/chat/token', chatController);
+
+// router.post('/chat/createToken', chatController);
 
 export default router;

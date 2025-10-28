@@ -6,6 +6,7 @@ import connectDB from './database/db.js';
 
 //Importing Routes
 import userRoutes from "./routes/user.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 
 
 //Initiasing App
@@ -41,6 +42,7 @@ app.use(
 
 //Using Routes:
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/", chatRoutes);
 
 const PORT = process.env.PORT;
 

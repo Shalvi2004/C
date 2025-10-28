@@ -14,8 +14,6 @@ export async function connectDB() {
 
     try {
         await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             dbName: "ChatAppDB",
         });
         console.log("✅ Connected to MongoDB database");
