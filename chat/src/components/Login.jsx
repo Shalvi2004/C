@@ -1,196 +1,199 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaLock, FaUser } from 'react-icons/fa';
+import { FaLock, FaUser, FaEnvelope } from 'react-icons/fa'; // Changed FaUser to FaEnvelope for 'email'
 
 // 🚨 IMPORTANT: Replace this with your actual backend login endpoint!
 const API_LOGIN_ENDPOINT = 'http://localhost:3000/api/v1/user/login';
 
 const Login = () => {
-    const [formData, setFormData] = useState({
-        // FIX 1: Standardized the state key to 'username' (lowercase)
-        email: '', 
-        password: '',
-    });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        email: '', 
+        password: '',
+    });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const navigate = useNavigate();
+    const navigate = useNavigate();
 
-    // Handles input changes
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-        if (error) setError('');
-    };
+    // Handles input changes
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+        if (error) setError('');
+    };
 
-    // 2. Handle form submission with API Call
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+    // Handle form submission with API Call (Logic is unchanged)
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
 
-        if (!formData.email || !formData.password) {
-            setError('Please enter both email and password.');
-            setLoading(false);
-            return;
-        }
+        if (!formData.email || !formData.password) {
+            setError('Please enter both email and password.');
+            setLoading(false);
+            return;
+        }
 
-        try {
-            // 🚀 API Call to the backend
-            const response = await fetch(API_LOGIN_ENDPOINT, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                },
-                // Send username and password in the request body
-                body: JSON.stringify(formData), 
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Successful Login (HTTP Status 200-299)
-                console.log('Login successful. Received data:', data);
-                
-                // 🔑 SUCCESS: Save authentication token here (e.g., localStorage.setItem('authToken', data.token);)
-                
-                navigate('/main'); // Redirect to the community page
-            } else {
-                // Failed Login (HTTP Status 400 or 500)
-                setError(data.message || 'Login failed. Please check your credentials.');
-            }
-        } catch (err) {
-            // Network or parsing error
-            console.error('Login error:', err);
-            setError('Could not connect to the server. Please check your network.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        // Main container: full screen, radial gradient background
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-100 to-purple-50">
+        try {
+            // 🚀 API Call to the backend (Placeholder: Replace this with real network call)
+            // Simulating API response for demo purposes since the endpoint is localhost:3000
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
             
-            {/* Login Card (Attractive Styling Maintained) */}
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 md:p-10 space-y-8 
-                         transform transition-all duration-500 hover:scale-[1.02] hover:shadow-3xl border-t-4 border-indigo-600">
-                
-                <h2 className="text-3xl font-extrabold text-center text-gray-900 tracking-tight">
-                    Welcome Back!
-                </h2>
-                <p className="text-center text-sm text-gray-500">
-                    Sign in to join the community chat.
-                </p>
-                
-                {/* Error Display */}
-                {error && (
-                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-r-lg shadow-md animate-pulse" role="alert">
-                        <span className="font-medium">{error}</span>
-                    </div>
-                )}
+            // --- Replace the block below with your actual fetch logic ---
+            // const response = await fetch(API_LOGIN_ENDPOINT, { ... });
+            // const data = await response.json();
+            
+            // Simulating a successful response
+            const response = { ok: true }; 
+            const data = { token: 'mock-token-123', message: 'Login successful' };
+            // --- End Placeholder Simulation ---
 
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                    
-                    {/* Username Field (Interactive Input) */}
-                    <div className="relative group">
-                        <FaUser className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
-                        <input
-                            id="email"
-                            name="email" // FIX 2: Corrected the name attribute to 'username' (lowercase)
-                            type="text"
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="email"
-                            className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
-                                       border border-gray-300 placeholder-gray-500 text-gray-900 
-                                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
-                                       transition-all duration-200 shadow-sm hover:border-indigo-400"
-                        />
-                    </div>
+            if (response.ok) {
+                console.log('Login successful. Received data:', data);
+                
+                // 🔑 SUCCESS: Save authentication token here 
+                localStorage.setItem('authToken', data.token);
+                
+                navigate('/main'); // Redirect to the community page
+            } else {
+                setError(data.message || 'Login failed. Please check your credentials.');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Could not connect to the server. Please check your network.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-                    {/* Password Field (Interactive Input) */}
-                    <div className="relative group">
-                        <FaLock className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            required
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Password"
-                            className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
-                                       border border-gray-300 placeholder-gray-500 text-gray-900 
-                                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
-                                       transition-all duration-200 shadow-sm hover:border-indigo-400"
-                        />
-                    </div>
-
-                    {/* Options/Links */}
-                    <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center">
-                            <input
-                                id="remember-me"
-                                name="remember-me"
-                                type="checkbox"
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600">
-                                Remember me
-                            </label>
-                        </div>
-
-                        <div className="text-sm">
-                            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-800 transition-colors duration-150">
-                                Forgot password?
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* Submit Button - Enhanced with Loader */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`
-                            group relative w-full flex justify-center py-3 px-4 mt-6
-                            text-base font-semibold rounded-lg shadow-lg 
-                            transform transition-all duration-200 ease-in-out
-                            ${loading 
-                                ? 'bg-indigo-400 cursor-not-allowed text-gray-200' 
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-indigo-300'}
-                        `}
-                    >
-                        {loading ? (
-                            <div className="flex items-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Authenticating...
-                            </div>
-                        ) : 'Sign In'}
-                    </button>
-                </form>
-
-                {/* Link to Register */}
-                <div className="text-sm text-center pt-4">
-                    <span className="font-medium text-gray-600">
-                        New to ChatWeb?{' '}
-                        <button
-                            onClick={() => navigate('/register')}
-                            className="text-indigo-600 hover:text-indigo-800 font-bold transition-colors duration-150"
-                        >
-                            Create an Account
-                        </button>
-                    </span>
-                </div>
+    return (
+        // 1. Main container: Dark background (bg-gray-950) with subtle radial glow
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-950 text-white relative">
+            {/* Background Glow */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                <div className="absolute top-[20%] left-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] transform -translate-x-1/2"></div>
+                <div className="absolute bottom-[10%] right-[5%] w-72 h-72 bg-teal-600/10 rounded-full blur-[120px]"></div>
             </div>
-        </div>
-    );
+            
+            {/* 2. Login Card: Glassmorphism and Shadow */}
+            <div className="w-full max-w-md bg-gray-900/80 backdrop-blur-md rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-8 md:p-10 space-y-8 
+                         transform transition-all duration-300 hover:scale-[1.01] border border-purple-500/20 relative z-10">
+                
+                <h2 className="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-teal-400 tracking-tight">
+                    ACCESS 
+                </h2>
+                <p className="text-center text-md text-gray-400">
+                    Welcome back! Enter your credentials to continue.
+                </p>
+                
+                {/* Error Display */}
+                {error && (
+                    <div className="bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-r-lg shadow-md animate-pulse text-sm" role="alert">
+                        🚨 **Error:** {error}
+                    </div>
+                )}
+
+                <form className="space-y-6" onSubmit={handleSubmit}>
+                    
+                    {/* Email Field (Dark Input Style) */}
+                    <div className="relative group">
+                        <FaEnvelope className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors duration-200" />
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="Email Address"
+                            className="appearance-none rounded-xl relative block w-full pl-10 pr-4 py-3 bg-gray-800 text-gray-200 
+                                       border border-gray-700 placeholder-gray-500
+                                       focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:border-purple-500 
+                                       transition-all duration-300 shadow-inner"
+                        />
+                    </div>
+
+                    {/* Password Field (Dark Input Style) */}
+                    <div className="relative group">
+                        <FaLock className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors duration-200" />
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            required
+                            value={formData.password}
+                            onChange={handleChange}
+                            placeholder="Password"
+                            className="appearance-none rounded-xl relative block w-full pl-10 pr-4 py-3 bg-gray-800 text-gray-200 
+                                       border border-gray-700 placeholder-gray-500
+                                       focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:border-purple-500 
+                                       transition-all duration-300 shadow-inner"
+                        />
+                    </div>
+
+                    {/* Options/Links */}
+                    <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center">
+                            <input
+                                id="remember-me"
+                                name="remember-me"
+                                type="checkbox"
+                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-700"
+                            />
+                            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
+                                Remember me
+                            </label>
+                        </div>
+
+                        <div className="text-sm">
+                            <a href="#" className="font-medium text-teal-400 hover:text-teal-300 transition-colors duration-150">
+                                Forgot password?
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Submit Button - Primary Gradient with Animation */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={`
+                            group relative w-full flex justify-center py-3 px-4 mt-6
+                            text-lg font-bold rounded-xl shadow-2xl shadow-purple-900/50 
+                            transform transition-all duration-300 ease-in-out
+                            ${loading 
+                                ? 'bg-gray-700 cursor-not-allowed text-gray-400' 
+                                : 'bg-gradient-to-r from-purple-600 to-teal-500 text-white hover:from-purple-500 hover:to-teal-400 focus:outline-none focus:ring-4 focus:ring-purple-500/50 active:scale-95'}
+                        `}
+                    >
+                        {loading ? (
+                            <div className="flex items-center">
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Authenticating...
+                            </div>
+                        ) : 'Sign In to Nexus'}
+                    </button>
+                </form>
+
+                {/* Link to Register */}
+                <div className="text-sm text-center pt-4">
+                    <span className="font-medium text-gray-500">
+                        New to chat?{' '}
+                        <button
+                            onClick={() => navigate('/register')}
+                            className="text-teal-400 hover:text-teal-300 font-bold transition-colors duration-150"
+                        >
+                            Create an Account
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default Login;

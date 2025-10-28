@@ -42,7 +42,7 @@ app.use(
 
 //Using Routes:
 app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/", chatRoutes);
+app.use("/api/v1", chatRoutes);
 
 const PORT = process.env.PORT;
 
