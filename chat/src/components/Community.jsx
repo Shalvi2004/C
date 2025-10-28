@@ -99,7 +99,7 @@ const RoomCard = ({ room }) => (
 const Community = () => {
   const navigate = useNavigate();
   const handlePrivate=()=>{
-    navigate("/create-token")
+    navigate("/CreateToken")
   }
   return (
     <div className="min-h-screen bg-[#ede6ff] text-white p-8">
