@@ -9,6 +9,10 @@ export const registerUser = async (req, res) => {
         const email = body.email ?? '';
         const password = body.password ?? '';
 
+    // Trim and log minimal info for debugging (avoid logging passwords)
+    console.log('Attempting to register user:', userName);
+    console.log('Email:', email);
+
         // Basic validation
         if (!userName || !email || !password) {
             return res.status(400).json({ message: 'Username, email and password are required' });
@@ -26,9 +30,10 @@ export const registerUser = async (req, res) => {
 
         // Return sanitized user (exclude password)
         const { _id } = saved;
+        // Return `name` to keep response shape consistent with frontend state (`name`)
         return res.status(201).json({
             message: 'User Registered Successfully',
-            user: { id: _id, userName: saved.userName, email: saved.email },
+            user: { id: _id, name: saved.userName, email: saved.email },
         });
     } catch (error) {
         console.error('Error registering user:', error);
@@ -61,10 +66,9 @@ export const loginUser = async (req, res) => {
 
         // Return sanitized user (exclude password)
         const { _id, userName } = user;
-        // console.log(user);
         return res.status(200).json({
             message: 'Login Successful',
-            user: { id: _id, userName, email: user.email },
+            user: { id: _id, name: userName, email: user.email },
         });
     } catch (error) {
         console.error('Error logging in user:', error);

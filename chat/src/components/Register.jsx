@@ -7,8 +7,9 @@ const API_REGISTER_ENDPOINT = 'http://localhost:3000/api/v1/user/register';
 
 const Register = () => {
     // FIX 1: Corrected 'userName' (camelCase) in state to match the casing used in the input name attribute ('username') later in the JSX.
+    // Use `name` to match the backend's accepted field (controller accepts `name` or `userName`)
     const [formData, setFormData] = useState({
-        username: '', // Changed from 'userName' to 'username'
+        name: '',
         email: '',
         password: '',
     });
@@ -48,7 +49,7 @@ const Register = () => {
         }
         
         // Basic empty field check
-        if (!formData.username || !formData.email || !formData.password) {
+        if (!formData.name || !formData.email || !formData.password) {
             setError('All fields are required.');
             setLoading(false);
             return;
@@ -110,11 +111,11 @@ const Register = () => {
                     <div className="relative group">
                         <FaUser className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-200" />
                         <input
-                            id="username"
-                            name="username" // FIX 4: Corrected name attribute to 'username' to match formData key
+                            id="name"
+                            name="name" // keep field name consistent with state and backend
                             type="text"
                             required
-                            value={formData.username}
+                            value={formData.name}
                             onChange={handleChange}
                             placeholder="Username"
                             className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 
