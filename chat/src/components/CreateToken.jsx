@@ -16,7 +16,7 @@ const CreateToken = () => {
   const [isLoading, setIsLoading] = useState(false);
      
   // Handle input changes
-  const handleChange = (e) => {
+  const handleChange = () => {
     setTokenData(prevData => ({
       ...prevData,
     }));
