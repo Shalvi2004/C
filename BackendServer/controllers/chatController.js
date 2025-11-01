@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { Chat } from '../modals/chat.modal.js';
 
 function randomTokenGenerator(length, roomName = '', participants = '') {
     // Create a seed that incorporates roomName and participants so tokens are influenced by them.
@@ -19,7 +20,7 @@ function randomTokenGenerator(length, roomName = '', participants = '') {
 }
 // todo : We save the chat tokens in database with room info and expiry time etc for production use.
 
-export const chatController = (req,res)=>{
+export const chatController = async (req,res)=>{
     // Read roomName and participants from query parameters (GET request)
     const { roomName = '', participants = '' } = req.query || {};
 
@@ -37,10 +38,50 @@ export const chatController = (req,res)=>{
         return res.status(400).json({ message: 'participants exceeds maximum allowed (50)' });
     }
 
-    // Generate token and return along with an echo of submitted data
-    const token = randomTokenGenerator(20);
-    // Log minimal info for debugging (do not log tokens in production)
-    console.log(`Generated token for room="${roomName}" participants=${p}`);
+    // Generate token and expiry
+    const TOKEN_LENGTH = 20;
+    const TOKEN_TTL_MINUTES = 60 * 24; // ! default 24 hours; changeable
 
-    return res.status(200).json({ token, roomName: roomName.trim(), participants: p });
+    let token = randomTokenGenerator(TOKEN_LENGTH, roomName, participants);
+    const tokenExpiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000);
+
+    // Try saving the chat document; if token collision occurs, retry a few times
+    const MAX_TRIES = 3;
+    let savedChat = null;
+    for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
+        try {
+            const participantsArray = Array.isArray(req.query.participants)
+                ? req.query.participants
+                : Array.from({ length: p }).map((_, i) => `participant_${i + 1}`);
+
+            const chatDoc = new Chat({
+                roomName: roomName.trim(),
+                participants: participantsArray,
+                verificationCode: crypto.randomBytes(6).toString('hex'),
+                token,
+                tokenExpiresAt,
+            });
+            savedChat = await chatDoc.save();
+            break;
+        } catch (err) {
+            // ! If duplicacy err occurs
+            if (err && err.code === 11000 && err.keyPattern && err.keyPattern.token) {
+                console.warn(`Token collision on attempt ${attempt}, regenerating token.`);
+                // regenerate token
+                token = randomTokenGenerator(TOKEN_LENGTH, roomName, participants + Date.now());
+                continue;
+            }
+            console.error('Error saving chat document:', err);
+            return res.status(500).json({ message: 'Failed to create chat room' });
+        }
+    }
+
+    if (!savedChat) {
+        return res.status(500).json({ message: 'Unable to generate unique token, please try again' });
+    }
+
+    // Log minimal info for debugging (do not log tokens in production)
+    console.log(`Created chat room="${savedChat.roomName}" token=${savedChat.token} expiresAt=${savedChat.tokenExpiresAt.toISOString()}`);
+
+    return res.status(201).json({ token: savedChat.token, tokenExpiresAt: savedChat.tokenExpiresAt, roomName: savedChat.roomName, participants: savedChat.participants.length });
 }

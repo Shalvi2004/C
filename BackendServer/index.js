@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import connectDB from './database/db.js';
+import cookieParser from "cookie-parser";
 
 //Importing Routes
 import userRoutes from "./routes/user.routes.js";
@@ -13,6 +14,7 @@ import chatRoutes from "./routes/chat.routes.js";
 const app = express();
 
 app.use(helmet());
+app.use(cookieParser())
 dotenv.config();
 
 
