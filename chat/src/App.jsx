@@ -13,6 +13,7 @@ const App = () => {
   return (
       <Routes>
         <Route path="/" element={<Welcome />} />
+        
         <Route path="/main" element={<Community />} /> 
         <Route path="/CreateToken" element={<CreateToken />} /> 
         <Route path="/community/general-chat" element={<Chat />} /> 
