@@ -39,26 +39,46 @@ const Login = () => {
             return;
         }
 
-        try {
-            // 🚀 API Call: Directly inside the async event handler.
-            const response = await axios.post(
-                API_LOGIN_ENDPOINT, 
-                formData,
-                // Include credentials for HttpOnly cookie session management
-                { withCredentials: true } 
-            );
+       try {
+        const response = await axios.post(
+            API_LOGIN_ENDPOINT,
+            formData,
+            { withCredentials: true }
+        );
 
-            // If axios resolves (status is 2xx), the login was successful.
-            setData(response.data);
-            console.log("Login Successful:", response.data);
+        // ✅ SUCCESS LOG (This only runs if the API returns a 2xx status)
+        console.log("✅ API Status: Success (2xx)");
+        console.log("Login Successful:", response.data); 
+       
+        navigate("/Main");
 
-        } catch (err) {
-            // Error handling for network errors and non-2xx server responses
-           console.log(err);
+    } catch (err) {
+        // 🚨 FAILURE LOG (This runs if the API returns a non-2xx status OR network error)
+        
+        if (axios.isAxiosError(err) && err.response) {
+            // Case 1: Server responded with a non-2xx status (e.g., 401, 404, 500)
+            console.error("🚨 Login Failed: Server Error (Non-2xx Status)");
+            console.error("HTTP Status Code:", err.response.status);
+            console.error("Server Response Message (The important part!):", err.response.data);
 
-        } finally {
-            setLoading(false); 
+            const errorMessage = err.response.data?.message || `Login failed (Status ${err.response.status}).`;
+            setError(errorMessage);
+            
+        } else if (axios.isAxiosError(err)) {
+            // Case 2: Network error (server is down, CORS issue, blocked request)
+            console.error("🚨 Login Failed: Network/CORS Error");
+            console.error("Error Details:", err.message);
+            setError('Network error. Could not connect to the server or CORS issue.');
+            
+        } else {
+            // Case 3: Other unexpected errors
+            console.error("🚨 Login Failed: Unexpected Code Error", err);
+            setError('An unknown client error occurred.');
         }
+
+    } finally {
+        setLoading(false);
+    }
 
     };
 
