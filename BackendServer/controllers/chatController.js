@@ -38,7 +38,7 @@ export const chatController = async (req,res)=>{
         return res.status(400).json({ message: 'participants exceeds maximum allowed (50)' });
     }
 
-    // Generate token and expiry
+    // Generate token and expiry 
     const TOKEN_LENGTH = 20;
     const TOKEN_TTL_MINUTES = 60 * 24; // ! default 24 hours; changeable
 
@@ -84,4 +84,36 @@ export const chatController = async (req,res)=>{
     console.log(`Created chat room="${savedChat.roomName}" token=${savedChat.token} expiresAt=${savedChat.tokenExpiresAt.toISOString()}`);
 
     return res.status(201).json({ token: savedChat.token, tokenExpiresAt: savedChat.tokenExpiresAt, roomName: savedChat.roomName, participants: savedChat.participants.length });
+}
+
+export const checkToken = async(req,res)=>{
+    const roomName = (req.query.roomName || '').trim();
+    const token = (req.body && req.body.token) ? String(req.body.token).trim() : (req.headers['x-room-token'] || '').trim();
+
+    if (!roomName) {
+        return res.status(400).json({ message: 'roomName query parameter is required' });
+    }
+    if (!token) {
+        return res.status(400).json({ message: 'Token is required (in request body `token` or `x-room-token` header)' });
+    }
+
+    try {
+        const room = await Chat.findOne({ roomName });
+        if (!room) {
+            return res.status(404).json({ message: 'Room not found' });
+        }
+
+        if (!room.token || String(room.token).trim() !== token) {
+            return res.status(401).json({ message: 'Invalid token for this room' });
+        }
+
+        if (room.tokenExpiresAt && room.tokenExpiresAt < new Date()) {
+            return res.status(410).json({ message: 'Token has expired' });
+        }
+
+        return res.status(200).json({ message: 'Token is valid', roomName: room.roomName, participants: room.participants });
+    } catch (error) {
+        console.error('Error checking token:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
 }
