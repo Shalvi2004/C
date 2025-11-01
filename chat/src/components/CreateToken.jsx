@@ -1,213 +1,176 @@
 import React, { useState } from 'react';
+import { FaUsers, FaDoorOpen, FaKey, FaCopy, FaChevronRight } from 'react-icons/fa';
 
-// --- API Call Implementation (Your Backend Logic) ---
-const callTokenGenerationAPI = async (participantCount) => {
-  
-    // ⚠️ MUST BE REPLACED: Use your actual API endpoint here
-    const API_ENDPOINT = 'YOUR_ACTUAL_API_ENDPOINT_HERE'; 
-    
-    if (API_ENDPOINT === 'YOUR_ACTUAL_API_ENDPOINT_HERE') {
-        // Throw an error if the user forgets to replace the placeholder
-        throw new Error("API_ENDPOINT is not configured. Please set it to your actual backend URL.");
+const API_TOKEN_ENDPOINT = 'http://localhost:3000/api/v1/chat/token';
+
+export default function CreateToken() {
+  const [roomName, setRoomName] = useState('');
+  const [participants, setParticipants] = useState('2');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [token, setToken] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const validate = () => {
+    if (!roomName.trim()) {
+      setError('Room name is required');
+      return false;
     }
-    
-    try {
-        const response = await fetch(API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // Include 'Authorization' or other required headers
-            },
-            body: JSON.stringify({ 
-                participantCount: participantCount 
-            }),
-        });
+    const n = parseInt(participants, 10);
+    if (Number.isNaN(n) || n <= 0) {
+      setError('Participants must be a positive number');
+      return false;
+    }
+    if (n > 50) {
+      setError('Participants cannot exceed 50');
+      return false;
+    }
+    return true;
+  };
 
-        if (!response.ok) {
-             const errorData = await response.json().catch(() => ({ message: 'No error message provided.' }));
-             throw new Error(errorData.message || `Server responded with status ${response.status}`);
-        }
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    setError('');
+    setToken('');
+    setCopied(false);
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('roomName', roomName.trim());
+      params.set('participants', String(parseInt(participants, 10)));
+      const url = `${API_TOKEN_ENDPOINT}?${params.toString()}`;
+      const res = await fetch(url, { method: 'GET' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.message || `Server responded ${res.status}`);
+      }
+      const data = await res.json();
+      const serverToken = data?.token ?? data?.roomToken ?? data?.tokenString;
+      if (!serverToken) throw new Error('Token missing in server response');
+      setToken(serverToken);
+    } catch (err) {
+      setError(err?.message || 'Failed to generate token');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // The backend must return the token in JSON format
-        return response.json(); 
+  const handleCopy = async () => {
+    if (!token) return;
+    try {
+      await navigator.clipboard.writeText(token);
+      setCopied(true);
+      setToken('');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Failed to copy token');
+    }
+  };
 
-    } catch (error) {
-        throw new Error(`Failed to connect to API: ${error.message}`);
-    }
-};
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-950 text-white relative">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-teal-600/10 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] left-[5%] w-72 h-72 bg-purple-600/10 rounded-full blur-[120px]"></div>
+      </div>
 
-// --- React Component ---
-const CreateToken = () => {
-    const [participantCount, setParticipantCount] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [generatedToken, setGeneratedToken] = useState(null);
-    const [finalCount, setFinalCount] = useState(null);
-    const [error, setError] = useState(null);
-    const[isCopied, setIsCopied] = useState(false); 
+      <div className="w-full max-w-md bg-gray-900/80 backdrop-blur-md rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-8 md:p-10 space-y-8 
+                   transform transition-all duration-300 hover:scale-[1.01] border border-teal-500/20 relative z-10">
+        
+        <h2 className="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-purple-400 tracking-tight">
+          Generate Room Token
+        </h2>
+        <p className="text-center text-md text-gray-400">
+          Create a secure access token for your chat room
+        </p>
 
-    const handleChange = (e) => {
-        const { value } = e.target;
-        setError(null); 
-        if (value === '' || /^\d+$/.test(value)) {
-            setParticipantCount(value);
-        }
-    };
+        {error && (
+          <div className="bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-r-lg shadow-md animate-pulse text-sm" role="alert">
+            🚨 {error}
+          </div>
+        )}
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsCopied(false); 
+        <form onSubmit={handleGenerate} className="space-y-4">
+          <div className="relative group">
+            <FaDoorOpen className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 group-focus-within:text-teal-400 transition-colors duration-200" />
+            <input
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              placeholder="Room Name"
+              className="appearance-none rounded-xl relative block w-full pl-10 pr-4 py-3 bg-gray-800 text-gray-200 
+                       border border-gray-700 placeholder-gray-500
+                       focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 
+                       transition-all duration-300 shadow-inner"
+            />
+          </div>
 
-        const count = parseInt(participantCount);
-        if (!count || count <= 0) {
-            setError("Please enter a valid number of participants (greater than 0).");
-            return;
-        }
+          <div className="relative group">
+            <FaUsers className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 group-focus-within:text-teal-400 transition-colors duration-200" />
+            <input
+              value={participants}
+              onChange={(e) => setParticipants(e.target.value)}
+              type="number"
+              min="1"
+              placeholder="Number of Participants"
+              className="appearance-none rounded-xl relative block w-full pl-10 pr-4 py-3 bg-gray-800 text-gray-200 
+                       border border-gray-700 placeholder-gray-500
+                       focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 
+                       transition-all duration-300 shadow-inner"
+            />
+          </div>
 
-        setIsLoading(true);
-        setError(null);
+          <button
+            type="submit"
+            disabled={loading}
+            className={`
+              group relative w-full flex justify-center py-3 px-4 mt-8
+              text-lg font-bold rounded-xl shadow-2xl shadow-teal-900/50 
+              transform transition-all duration-300 ease-in-out items-center space-x-2
+              ${loading 
+                ? 'bg-gray-700 cursor-not-allowed text-gray-400' 
+                : 'bg-gradient-to-r from-teal-500 to-purple-600 text-white hover:from-teal-400 hover:to-purple-500 focus:outline-none focus:ring-4 focus:ring-teal-500/50 active:scale-95'}
+            `}>
+            {loading ? (
+              <div className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...
+              </div>
+            ) : (
+              <>
+                <FaKey className="w-4 h-4" />
+                <span>Generate Token</span>
+                <FaChevronRight className="w-4 h-4 ml-1" />
+              </>
+            )}
+          </button>
+        </form>
 
-        try {
-            // 🔑 This line now calls your backend API directly.
-            const response = await callTokenGenerationAPI(count);
+        {token && (
+          <div className="mt-4 p-4 bg-gray-800/50 border border-teal-500/30 rounded-xl">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-400">Your Token</span>
+              <FaKey className="text-teal-400 w-4 h-4" />
+            </div>
+            <div className="font-mono text-sm text-teal-300 break-all mb-3 p-2 bg-gray-900/50 rounded">{token}</div>
+            <button 
+              onClick={handleCopy}
+              className="w-full flex items-center justify-center space-x-2 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all duration-200 active:scale-95">
+              <FaCopy className="w-4 h-4" />
+              <span>Copy Token</span>
+            </button>
+          </div>
+        )}
 
-            // Assuming your backend returns the token in a field named 'token'
-            if (response.token) { 
-                setGeneratedToken(response.token);
-                setFinalCount(count);
-                setParticipantCount(''); 
-            } else {
-                setError('Token generation succeeded, but the token was missing in the response. Check your backend payload.');
-            }
-
-        } catch (err) {
-            setError(err.message || 'An unexpected error occurred during token generation.');
-            console.error('Token Generation Error:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCopy = async () => {
-        if (generatedToken) {
-            await navigator.clipboard.writeText(generatedToken);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
-        }
-    };
-
-
-    const renderContent = () => {
-        if (generatedToken) {
-            // Result View (Unchanged stylish UI)
-            return (
-                <div className='w-full flex flex-col items-center text-center'>
-                    <h1 className='text-5xl font-extrabold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500'>
-                        Success! 🎉
-                    </h1>
-                    
-                    <p className='text-lg text-gray-600 mb-8'>
-                        A unique token for **{finalCount}** participants has been created.
-                    </p>
-
-                    <h2 className='text-md font-medium text-gray-700 mb-3'>Your Access Token:</h2>
-                    
-                    <div className="w-full bg-teal-50 p-4 rounded-lg border border-teal-300 transition duration-300 hover:shadow-md cursor-pointer" onClick={handleCopy}>
-                        <p className="text-xl md:text-2xl text-teal-800 font-mono tracking-wider break-all select-all">
-                            {generatedToken}
-                        </p>
-                    </div>
-
-                    <button 
-                        onClick={handleCopy}
-                        className={`mt-6 w-full py-3 font-semibold rounded-xl shadow-lg transition duration-300 transform active:scale-95 flex items-center justify-center space-x-2 
-                            ${isCopied ? 'bg-green-500 text-white' : 'bg-teal-600 text-white hover:bg-teal-700'}
-                        `}
-                    >
-                        {isCopied ? (
-                            <>
-                                <span className='text-xl'>✅</span> Copied!
-                            </>
-                        ) : (
-                            <>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
-                                    <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
-                                </svg>
-                                <span>Copy Token</span>
-                            </>
-                        )}
-                    </button>
-
-                </div>
-            );
-        } 
-
-        // Form View (Unchanged stylish UI)
-        return (
-            <form onSubmit={handleSubmit} className='space-y-6 w-full'>
-                <h1 className='text-5xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600'>
-                    Token Factory 🏭
-                </h1>
-                <p className='text-lg text-gray-600 mb-8'>
-                    Specify the number of participants to generate a unique, secured access token.
-                </p>
-
-                {/* Error Message Display */}
-                {error && (
-                    <div className="p-4 bg-red-50 border border-red-400 text-red-700 rounded-xl animate-pulse">
-                        🛑 **Error:** {error}
-                    </div>
-                )}
-
-                {/* Participant Count Input */}
-                <div>
-                    <label htmlFor='participantCount' className='block text-md font-semibold text-gray-700 mb-2'>Number of Participants</label>
-                    <input
-                        id='participantCount'
-                        name='participantCount'
-                        type='number'
-                        value={participantCount}
-                        onChange={handleChange}
-                        placeholder='e.g., 50'
-                        className='w-full p-4 border-2 border-gray-200 rounded-xl text-lg transition duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 shadow-sm'
-                        min='1'
-                        required
-                    />
-                </div>
-
-                {/* Submit Button */}
-                <button
-                    type='submit'
-                    disabled={isLoading || !participantCount}
-                    className='w-full py-4 px-4 bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-xl hover:bg-indigo-700 transition duration-300 transform hover:scale-[1.01] active:scale-95 disabled:bg-gray-400 disabled:shadow-md disabled:cursor-not-allowed flex justify-center items-center space-x-3'
-                >
-                    {isLoading ? (
-                        <>
-                            {/* Simple loading spinner */}
-                            <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Generating Token...</span>
-                        </>
-                    ) : (
-                        <>
-                            <span>Generate Token</span>
-                            <span className='text-2xl ml-2'>→</span>
-                        </>
-                    )}
-                </button>
-            </form>
-        );
-    };
-
-    return (
-        <div className='flex justify-center p-8 bg-blue-50 min-h-screen items-center'>
-            <div className='w-full max-w-lg bg-white p-8 md:p-12 rounded-3xl shadow-2xl border-t-4 border-indigo-500 transform transition duration-500 hover:shadow-3xl'>
-                {renderContent()}
-            </div>
-        </div>
-    );
-};
-
-export default CreateToken;
+        {copied && !token && (
+          <div className="text-center text-green-400 text-sm animate-pulse">
+            ✅ Token copied to clipboard
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
