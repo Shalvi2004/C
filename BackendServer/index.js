@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 //Importing Routes
 import userRoutes from "./routes/user.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import verificationRoutes from "./routes/verification.route.js";
 
 
 //Initiasing App
@@ -45,6 +46,7 @@ app.use(
 //Using Routes:
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1", chatRoutes);
+app.use("/api/v1/verification", verificationRoutes);
 
 const PORT = process.env.PORT;
 
