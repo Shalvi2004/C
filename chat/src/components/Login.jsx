@@ -21,6 +21,7 @@ const Login = () => {
             ...formData,
             [e.target.name]: e.target.value,
         });
+
         if (error) setError('');
     };
 
@@ -47,14 +48,14 @@ const Login = () => {
             
             // Simulating a successful response
             const response = { ok: true }; 
-            const data = { token: 'mock-token-123', message: 'Login successful' };
+            // const data = { token: 'mock-token-123', message: 'Login successful' };
             // --- End Placeholder Simulation ---
 
             if (response.ok) {
                 console.log('Login successful. Received data:', data);
                 
                 // 🔑 SUCCESS: Save authentication token here 
-                localStorage.setItem('authToken', data.token);
+//                 localStorage.setItem('authToken', data.token);
                 
                 navigate('/main'); // Redirect to the community page
             } else {
@@ -82,7 +83,8 @@ const Login = () => {
                          transform transition-all duration-300 hover:scale-[1.01] border border-purple-500/20 relative z-10">
                 
                 <h2 className="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-teal-400 tracking-tight">
-                    ACCESS 
+                    Login
+
                 </h2>
                 <p className="text-center text-md text-gray-400">
                     Welcome back! Enter your credentials to continue.
