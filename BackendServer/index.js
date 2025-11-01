@@ -4,53 +4,52 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import connectDB from './database/db.js';
 import cookieParser from "cookie-parser";
-
-//Importing Routes
 import userRoutes from "./routes/user.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import verificationRoutes from "./routes/verification.route.js";
 
-
-//Initiasing App
 const app = express();
 
 app.use(helmet());
-app.use(cookieParser())
+app.use(cookieParser());
 dotenv.config();
 
-
-// Parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Simple request logger to help debug incoming API calls
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
 app.get("/", (req, res) => {
-  res.status(200).json({
-    message: "Welcome to Backend Server",
-  });
+  res.status(200).json({ message: "Welcome to Backend Server" });
 });
 
+const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5173'];
 
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS policy: This origin is not allowed'));
+    },
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true,
+    maxAge: 86400,
   })
 );
 
-//Using Routes:
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1", chatRoutes);
 app.use("/api/v1/verification", verificationRoutes);
 
 const PORT = process.env.PORT;
 
-// Start server only after successful DB connection
 (async () => {
   try {
     await connectDB();
