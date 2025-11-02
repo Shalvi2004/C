@@ -5,9 +5,12 @@ import jwt from 'jsonwebtoken';
 // Common cookie options for security and consistency
 const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', 
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
-    sameSite: 'strict' 
+    // secure should be true in production (HTTPS). For local development we keep it false.
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    // For cross-origin requests from localhost:5173 (different port), use 'lax' in dev.
+    // In production, when front-end is on a different domain, you may need 'none' and secure=true.
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
 };
 
 export const registerUser = async (req, res) => {

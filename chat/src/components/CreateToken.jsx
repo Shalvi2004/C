@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaUsers, FaDoorOpen, FaKey, FaCopy, FaChevronRight } from 'react-icons/fa';
 
-const API_TOKEN_ENDPOINT = 'http://localhost:3000/api/v1/chat/token';
+const API_TOKEN_ENDPOINT = 'http://localhost:3000/api/v1/chat/room';
 
 export default function CreateToken() {
+  const navigate = useNavigate();
   const [roomName, setRoomName] = useState('');
   const [participants, setParticipants] = useState('2');
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,11 @@ export default function CreateToken() {
       params.set('roomName', roomName.trim());
       params.set('participants', String(parseInt(participants, 10)));
       const url = `${API_TOKEN_ENDPOINT}?${params.toString()}`;
-      const res = await fetch(url, { method: 'GET' });
+  const res = await fetch(url, { method: 'GET', credentials: 'include' });
+      if (res.status === 401) {
+        navigate('/login');
+        return;
+      }
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.message || `Server responded ${res.status}`);
@@ -51,6 +57,7 @@ export default function CreateToken() {
       setToken(serverToken);
     } catch (err) {
       setError(err?.message || 'Failed to generate token');
+      console.log("Error from my side");
     } finally {
       setLoading(false);
     }
@@ -71,8 +78,8 @@ export default function CreateToken() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-950 text-white relative">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-        <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-teal-600/10 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-[-10%] left-[5%] w-72 h-72 bg-purple-600/10 rounded-full blur-[120px]"></div>
+        <div className="absolute w-96 h-96 bg-teal-600/10 rounded-full blur-[100px]"></div>
+        <div className="absolute w-72 h-72 bg-purple-600/10 rounded-full blur-[120px]"></div>
       </div>
 
       <div className="w-full max-w-md bg-gray-900/80 backdrop-blur-md rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-8 md:p-10 space-y-8 
