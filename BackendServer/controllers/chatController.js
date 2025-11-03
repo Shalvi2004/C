@@ -50,13 +50,24 @@ export const chatController = async (req,res)=>{
     let savedChat = null;
     for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
         try {
-            const participantsArray = Array.isArray(req.query.participants)
-                ? req.query.participants
-                : Array.from({ length: p }).map((_, i) => `participant_${i + 1}`);
+            const ownerId = req.user && req.user.id;
+            if (!ownerId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            let participantsArray;
+            if (Array.isArray(req.query.participants)) {
+                participantsArray = req.query.participants.slice();
+                if (!participantsArray.includes(ownerId)) participantsArray.unshift(ownerId);
+            } else {
+                // Create placeholder participant ids but ensure owner is included as first participant
+                participantsArray = [ownerId, ...Array.from({ length: Math.max(0, p - 1) }).map((_, i) => `participant_${i + 2}`)];
+            }
 
             const chatDoc = new Chat({
                 roomName: roomName.trim(),
                 participants: participantsArray,
+                owner: ownerId,
                 verificationCode: crypto.randomBytes(6).toString('hex'),
                 token,
                 tokenExpiresAt,
@@ -83,7 +94,7 @@ export const chatController = async (req,res)=>{
     // Log minimal info for debugging (do not log tokens in production)
     console.log(`Created chat room="${savedChat.roomName}" token=${savedChat.token} expiresAt=${savedChat.tokenExpiresAt.toISOString()}`);
 
-    return res.status(201).json({ token: savedChat.token, tokenExpiresAt: savedChat.tokenExpiresAt, roomName: savedChat.roomName, participants: savedChat.participants.length });
+    return res.status(201).json({ token: savedChat.token, tokenExpiresAt: savedChat.tokenExpiresAt, roomName: savedChat.roomName, participants: savedChat.participants.length, owner: savedChat.owner });
 }
 
 export const checkToken = async(req,res)=>{

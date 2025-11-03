@@ -11,6 +11,12 @@ const chatSchema = new mongoose.Schema(
       type: [String],
       required: true,
     },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     verificationCode: {
       type: String,
       required: true,
@@ -35,3 +41,4 @@ const chatSchema = new mongoose.Schema(
 );
 
 export const Chat = mongoose.model("Chat", chatSchema);
+

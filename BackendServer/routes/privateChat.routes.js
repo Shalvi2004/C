@@ -1,8 +1,9 @@
 import Router from 'express';
-import { getallPrivateRooms } from '../controllers/privateRoom.controller.js';
+import { getRoomsByOwner } from '../controllers/privateRoom.controller.js';
+import { isUserAuthenticated } from '../middleware/userAuth.middleware.js';
 
 const router = Router();
 
-router.get('/private-room/get-room-by-user',getallPrivateRooms)
+router.get('/private-room/get-room-by-owner', isUserAuthenticated, getRoomsByOwner);
 
 export default router;
