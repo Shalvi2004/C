@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/user.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import verificationRoutes from "./routes/verification.route.js";
+import privateChatRoutes from './routes/privateChat.routes.js';
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use(
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1", chatRoutes);
 app.use("/api/v1/verification", verificationRoutes);
+app.use('/api/v1', privateChatRoutes);
 
 const PORT = process.env.PORT;
 
