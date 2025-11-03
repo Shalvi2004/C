@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Private from './Private';
 import axios from 'axios'; 
 
 // --- Configuration and RoomCard remain unchanged ---
@@ -141,6 +142,11 @@ const Community = () => {
           </div>
         </div>
       </div>
+    {/* PRIVATE SECTION */}
+    <div className='mt-10'>
+    <Private/>
+    </div>
+    
     </div>
   );
 };

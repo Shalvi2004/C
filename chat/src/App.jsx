@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Welcome from './components/Welcome';
 import Community from './components/Community';
 import CreateToken from './components/CreateToken';
-// import Private from './components/Private'; // Unused component, check if it's needed
+// import Private from './components/Private';
 import Chat from './components/Chat';
 import TechTalk from './components/TechTalk';
 import Login from './components/Login';
@@ -11,6 +11,7 @@ import Register from './components/Register';
 
 const App = () => {
   return (
+  
       <Routes>
         <Route path="/" element={<Welcome />} />
         

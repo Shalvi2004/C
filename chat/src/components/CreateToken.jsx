@@ -70,6 +70,7 @@ export default function CreateToken() {
       setCopied(true);
       setToken('');
       setTimeout(() => setCopied(false), 2000);
+      navigate('/Main');
     } catch {
       setError('Failed to copy token');
     }
