@@ -8,9 +8,11 @@ export const getRoomsByOwner = async (req, res) => {
 
     try {
         const rooms = await Chat.find({ owner: ownerId });
+        console.log(rooms);
         const data = rooms.map(room => ({
             roomName: room.roomName,
-            participantsCount: room.participants.length
+            participantsCount: room.participants.length,
+            id: room._id,
         }));
         return res.json(data);
     } catch (error) {
