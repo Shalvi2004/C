@@ -65,8 +65,8 @@ export default function CreateToken() {
   const handleCopy = async () => {
     if (!token) return;
     try {
-      await navigator.clipboard.writeText(token);
-      setCopied(true);~
+  await navigator.clipboard.writeText(token);
+  setCopied(true);
       setToken('');
       setTimeout(() => setCopied(false), 2000);
       navigate('/Main');

@@ -1,27 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
+// Presentational components & constants
+import SkeletonCard from './private/SkeletonCard';
+import PrivateRoomCard from './private/PrivateRoomCard';
+import TokenModal from './private/TokenModal';
+import { ROOMS_BY_OWNER_URL, VERIFY_TOKEN_URL } from './private/constants';
 
-const API_URL = 'http://localhost:3000/api/v1/private-room/get-room-by-owner';
-
+/**
+ * Private
+ * Container component handling fetching of rooms & token verification logic.
+ * Logic intentionally unchanged; only structural refactor for production clarity.
+ */
 const Private = () => {
   const navigate = useNavigate();
+
+  // Data state
   const [rooms, setRooms] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // modal state
+  // Modal/token state
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [token, setToken] = useState('');
   const [tokenError, setTokenError] = useState('');
   const [verifying, setVerifying] = useState(false);
 
-  // Fetch private rooms
+  /** Fetch private rooms owned by user */
   const fetchRooms = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(API_URL, { method: 'GET', credentials: 'include' });
+      const response = await fetch(ROOMS_BY_OWNER_URL, { method: 'GET', credentials: 'include' });
       if (response.status !== 200) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setRooms(data.rooms || data);
@@ -33,7 +44,7 @@ const Private = () => {
     }
   };
 
-  // Open token modal
+  /** Open token modal for selected room */
   const handleEnterRoom = (roomId) => {
     setSelectedRoomId(roomId);
     setToken('');
@@ -41,7 +52,7 @@ const Private = () => {
     setShowTokenModal(true);
   };
 
-  // Verify token (roomName in query, token in body)
+  /** Verify token: roomName passed via query param, token in body */
   const handleVerifyToken = async (e) => {
     e.preventDefault();
     setTokenError('');
@@ -56,22 +67,18 @@ const Private = () => {
 
     setVerifying(true);
     try {
-      // ✅ roomName as query param, token in body
-      const url = `http://localhost:3000/api/v1/chat/token?roomName=${encodeURIComponent(roomName)}`;
-
+      const url = `${VERIFY_TOKEN_URL}?roomName=${encodeURIComponent(roomName)}`;
       const res = await fetch(url, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }), // only token in body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
       });
 
       if (res.status === 200) {
         console.log('✅ Token verified successfully');
         setShowTokenModal(false);
-        navigate('/community/general-chat'); // navigate to chat page
+        navigate('/community/general-chat');
         return;
       }
 
@@ -90,26 +97,14 @@ const Private = () => {
     }
   };
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
-
-  const SkeletonCard = () => (
-    <div className="w-80 rounded-3xl border border-gray-800/60 bg-gray-900/60 backdrop-blur-md p-6 shadow-xl ring-1 ring-indigo-500/10">
-      <div className="h-5 w-44 animate-pulse rounded bg-gray-800 mb-3" />
-      <div className="h-4 w-28 animate-pulse rounded bg-gray-800 mb-6" />
-      <div className="h-10 w-full animate-pulse rounded bg-gray-800" />
-    </div>
-  );
+  useEffect(() => { fetchRooms(); }, []);
 
   if (loading) {
     return (
       <section className="relative rounded-3xl border border-gray-800/60 bg-gray-950/60 p-6 backdrop-blur-md shadow-[0_0_40px_rgba(99,102,241,0.25)] ring-1 ring-indigo-500/10">
         <div className="absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-indigo-900/20 blur-3xl" />
         <header className="relative z-10 mx-auto mb-6 flex max-w-5xl items-center justify-between">
-          <h2 className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 bg-clip-text text-3xl font-extrabold text-transparent tracking-tight">
-            Your Private Rooms
-          </h2>
+          <h2 className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 bg-clip-text text-3xl font-extrabold text-transparent tracking-tight">Your Private Rooms</h2>
           <div className="h-9 w-28 animate-pulse rounded-xl bg-gray-800" />
         </header>
         <div className="relative z-10 mx-auto grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -178,112 +173,31 @@ const Private = () => {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-white">No private rooms yet</h3>
-              <p className="mt-1 text-sm text-gray-400">
-                Create a private room to get started, then come back here to manage it.
-              </p>
+              <p className="mt-1 text-sm text-gray-400">Create a private room to get started, then come back here to manage it.</p>
             </div>
           </div>
         ) : (
           rooms.map((room) => (
-            <div
-              key={room.id}
-              className="group relative w-80 overflow-hidden rounded-3xl border border-gray-800/60 bg-gray-900/60 p-6 shadow-xl backdrop-blur-md ring-1 ring-indigo-500/10 transition-all duration-500 hover:border-indigo-500 hover:shadow-[0_0_40px_rgba(99,102,241,0.5)] hover:scale-[1.03]"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="max-w-[12rem] truncate text-lg font-semibold text-white">
-                  {room.roomName || 'Room Name Missing'}
-                </h3>
-                <span className="inline-flex items-center rounded-full bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-200">
-                  <svg className="mr-1 h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                    <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M17 20h5V4h-5M2 20h5V10H2m8 10h4V14h-4" />
-                  </svg>
-                  {room.participantsCount || '—'}
-                </span>
-              </div>
-
-              <p className="mb-5 line-clamp-2 text-sm text-gray-400">
-                Private room for focused discussions and collaboration.
-              </p>
-
-              <button
-                onClick={() => handleEnterRoom(room.id)}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xl shadow-indigo-900/40 transition hover:scale-[1.02] hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/30"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                  <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-                Enter Room
-              </button>
-            </div>
+            <PrivateRoomCard key={room.id} room={room} onEnter={handleEnterRoom} />
           ))
         )}
       </div>
 
       {/* Token Modal */}
-      {showTokenModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Enter Access Token</h3>
-              <button
-                onClick={() => setShowTokenModal(false)}
-                className="rounded-full p-1 text-gray-400 hover:text-gray-200"
-                aria-label="Close"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleVerifyToken}>
-              <label className="block text-sm text-gray-300 mb-2">Token</label>
-              <input
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Paste your room token"
-                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 outline-none focus:border-indigo-500"
-                autoFocus
-              />
-              {tokenError && <p className="mt-2 text-sm text-red-400">{tokenError}</p>}
-
-              <div className="mt-5 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowTokenModal(false)}
-                  className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={verifying}
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 disabled:opacity-60"
-                >
-                  {verifying ? (
-                    <>
-                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25" />
-                        <path d="M4 12a8 8 0 0 1 8-8" strokeWidth="4" className="opacity-75" />
-                      </svg>
-                      Verifying…
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                      Verify & Enter
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <TokenModal
+        visible={showTokenModal}
+        token={token}
+        tokenError={tokenError}
+        verifying={verifying}
+        onClose={() => setShowTokenModal(false)}
+        onChangeToken={setToken}
+        onSubmit={handleVerifyToken}
+      />
     </section>
   );
 };
 
 export default Private;
+
+// Future extensibility: If converting to a configurable component, define PropTypes here.
+Private.propTypes = {};
