@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost:3000/api/v1/private-room/get-room-by-owner';
 
 const Private = () => {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,6 +16,7 @@ const Private = () => {
   const [tokenError, setTokenError] = useState('');
   const [verifying, setVerifying] = useState(false);
 
+  // Fetch private rooms
   const fetchRooms = async () => {
     setLoading(true);
     setError('');
@@ -30,7 +33,7 @@ const Private = () => {
     }
   };
 
-  // open modal on button click
+  // Open token modal
   const handleEnterRoom = (roomId) => {
     setSelectedRoomId(roomId);
     setToken('');
@@ -38,37 +41,37 @@ const Private = () => {
     setShowTokenModal(true);
   };
 
-  // verify token with backend
+  // Verify token (roomName in query, token in body)
   const handleVerifyToken = async (e) => {
     e.preventDefault();
     setTokenError('');
+
     if (!token?.trim()) {
       setTokenError('Token is required.');
       return;
     }
+
+    const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
+    const roomName = selectedRoom?.roomName || '';
+
     setVerifying(true);
     try {
-      // If your backend expects GET with query params:
-      const url = `http://localhost:3000/api/v1/chat/room/verify-token?roomId=${encodeURIComponent(
-        selectedRoomId
-      )}&token=${encodeURIComponent(token)}`;
+      // ✅ roomName as query param, token in body
+      const url = `http://localhost:3000/api/v1/chat/token?roomName=${encodeURIComponent(roomName)}`;
 
-      // If your backend expects POST instead, switch to method: 'POST' and body: JSON.
       const res = await fetch(url, {
-        method: 'POST', // change to 'POST' if needed
+        method: 'POST',
         credentials: 'include',
         headers: {
-          // If POST, use: 'Content-Type': 'application/json'
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ roomId: selectedRoomId, token }), // for POST payloads
+        body: JSON.stringify({ token }), // only token in body
       });
 
       if (res.status === 200) {
-        // Success: close modal and navigate
+        console.log('✅ Token verified successfully');
         setShowTokenModal(false);
-        // Replace with your router navigation (e.g., react-router)
-        navigate('./Chat')
+        navigate('/community/general-chat'); // navigate to chat page
         return;
       }
 
@@ -113,8 +116,6 @@ const Private = () => {
           <SkeletonCard />
           <SkeletonCard />
         </div>
-
-        {/* Token modal while loading not shown */}
       </section>
     );
   }
@@ -166,7 +167,7 @@ const Private = () => {
         </button>
       </div>
 
-      {/* Grid */}
+      {/* Rooms grid */}
       <div className="relative z-10 mx-auto grid max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {rooms.length === 0 ? (
           <div className="col-span-full">
@@ -188,11 +189,6 @@ const Private = () => {
               key={room.id}
               className="group relative w-80 overflow-hidden rounded-3xl border border-gray-800/60 bg-gray-900/60 p-6 shadow-xl backdrop-blur-md ring-1 ring-indigo-500/10 transition-all duration-500 hover:border-indigo-500 hover:shadow-[0_0_40px_rgba(99,102,241,0.5)] hover:scale-[1.03]"
             >
-              {/* Hover aura */}
-              <div className="pointer-events-none absolute inset-0 -z-10 opacity-0 blur-2xl transition group-hover:opacity-100">
-                <div className="h-full w-full bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10" />
-              </div>
-
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="max-w-[12rem] truncate text-lg font-semibold text-white">
                   {room.roomName || 'Room Name Missing'}
@@ -249,9 +245,7 @@ const Private = () => {
                 className="w-full rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 outline-none focus:border-indigo-500"
                 autoFocus
               />
-              {tokenError && (
-                <p className="mt-2 text-sm text-red-400">{tokenError}</p>
-              )}
+              {tokenError && <p className="mt-2 text-sm text-red-400">{tokenError}</p>}
 
               <div className="mt-5 flex items-center justify-end gap-3">
                 <button
