@@ -1,48 +1,36 @@
 import crypto from 'crypto';
 import { Chat } from '../modals/chat.modal.js';
-
-function randomTokenGenerator(length, roomName = '', participants = '') {
-    // Create a seed that incorporates roomName and participants so tokens are influenced by them.
-    const seed = `${roomName.trim()}|${participants}`;
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-    // Use a SHA-256 hash of seed + random salt to produce high-entropy bytes
-    const salt = crypto.randomBytes(8).toString('hex');
-    const digest = crypto.createHash('sha256').update(seed + '|' + salt).digest();
-
-    let token = '';
-    for (let i = 0; i < length; i++) {
-        // Use digest bytes to index into allowed characters
-        const idx = digest[i % digest.length] % characters.length;
-        token += characters.charAt(idx);
-    }
-    return token;
-}
-// todo : We save the chat tokens in database with room info and expiry time etc for production use.
+import { generateRoomToken, generateVerificationCode, getTokenTTLMinutes } from '../utils/token.js';
 
 export const chatController = async (req,res)=>{
-    // Read roomName and participants from query parameters (GET request)
-    const { roomName = '', participants = '' } = req.query || {};
+    // Prefer body (POST) but fallback to query (GET) for backward compatibility
+    const body = req.body || {};
+    const q = req.query || {};
+    const roomNameRaw = (body.roomName ?? body.name ?? q.roomName ?? '').toString();
+    const participantsRaw = (body.participants ?? q.participants);
 
     // Basic validation
-    const p = parseInt(participants, 10);
-    if (!roomName || !roomName.trim()) {
+    const roomName = roomNameRaw.trim();
+    if (!roomName) {
         return res.status(400).json({ message: 'roomName query parameter is required' });
     }
-    if (Number.isNaN(p) || p <= 0) {
-        return res.status(400).json({ message: 'participants must be a positive integer' });
-    }
-
-    // Optionally, you might enforce a maximum participants limit here
-    if (p > 50) {
-        return res.status(400).json({ message: 'participants exceeds maximum allowed (50)' });
+    // Participants can be an array of IDs/usernames; default to owner only if not provided.
+    // For legacy GET flow where participants was a number, we accept a positive integer but we no longer create placeholders.
+    let participantsArray = [];
+    if (Array.isArray(participantsRaw)) {
+        participantsArray = participantsRaw.map(String);
+    } else if (participantsRaw !== undefined) {
+        const pInt = parseInt(participantsRaw, 10);
+        if (Number.isNaN(pInt) || pInt <= 0) {
+            return res.status(400).json({ message: 'participants must be a positive integer when provided as count' });
+        }
     }
 
     // Generate token and expiry 
-    const TOKEN_LENGTH = 20;
-    const TOKEN_TTL_MINUTES = 60 * 24; // ! default 24 hours; changeable
+    const TOKEN_BYTES = 16; // 128-bit token
+    const TOKEN_TTL_MINUTES = getTokenTTLMinutes(60 * 24); // default 24 hours or env TOKEN_TTL_MINUTES
 
-    let token = randomTokenGenerator(TOKEN_LENGTH, roomName, participants);
+    let token = generateRoomToken(TOKEN_BYTES);
     const tokenExpiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000);
 
     // Try saving the chat document; if token collision occurs, retry a few times
@@ -55,20 +43,15 @@ export const chatController = async (req,res)=>{
                 return res.status(401).json({ message: 'Unauthorized' });
             }
 
-            let participantsArray;
-            if (Array.isArray(req.query.participants)) {
-                participantsArray = req.query.participants.slice();
-                if (!participantsArray.includes(ownerId)) participantsArray.unshift(ownerId);
-            } else {
-                // Create placeholder participant ids but ensure owner is included as first participant
-                participantsArray = [ownerId, ...Array.from({ length: Math.max(0, p - 1) }).map((_, i) => `participant_${i + 2}`)];
-            }
+            // Ensure owner is always the first participant and uniqueness of list
+            const set = new Set([ownerId, ...participantsArray]);
+            participantsArray = Array.from(set);
 
             const chatDoc = new Chat({
                 roomName: roomName.trim(),
                 participants: participantsArray,
                 owner: ownerId,
-                verificationCode: crypto.randomBytes(6).toString('hex'),
+                verificationCode: generateVerificationCode(6),
                 token,
                 tokenExpiresAt,
             });
@@ -76,11 +59,16 @@ export const chatController = async (req,res)=>{
             break;
         } catch (err) {
             // ! If duplicacy err occurs
-            if (err && err.code === 11000 && err.keyPattern && err.keyPattern.token) {
-                console.warn(`Token collision on attempt ${attempt}, regenerating token.`);
-                // regenerate token
-                token = randomTokenGenerator(TOKEN_LENGTH, roomName, participants + Date.now());
-                continue;
+            if (err && err.code === 11000) {
+                // Duplicate token or roomName; distinguish by key
+                if (err.keyPattern && err.keyPattern.token) {
+                    // regenerate token and retry
+                    token = generateRoomToken(TOKEN_BYTES);
+                    continue;
+                }
+                if (err.keyPattern && err.keyPattern.roomName) {
+                    return res.status(409).json({ message: 'Room name already exists' });
+                }
             }
             console.error('Error saving chat document:', err);
             return res.status(500).json({ message: 'Failed to create chat room' });
@@ -91,10 +79,16 @@ export const chatController = async (req,res)=>{
         return res.status(500).json({ message: 'Unable to generate unique token, please try again' });
     }
 
-    // Log minimal info for debugging (do not log tokens in production)
-    console.log(`Created chat room="${savedChat.roomName}" token=${savedChat.token} expiresAt=${savedChat.tokenExpiresAt.toISOString()}`);
+    // Log minimal info for debugging (never log tokens in production)
+    console.log(`Created chat room="${savedChat.roomName}" owner=${savedChat.owner} exp=${savedChat.tokenExpiresAt.toISOString()}`);
 
-    return res.status(201).json({ token: savedChat.token, tokenExpiresAt: savedChat.tokenExpiresAt, roomName: savedChat.roomName, participants: savedChat.participants.length, owner: savedChat.owner });
+    return res.status(201).json({
+        token: savedChat.token,
+        tokenExpiresAt: savedChat.tokenExpiresAt,
+        roomName: savedChat.roomName,
+        participants: savedChat.participants.length,
+        owner: savedChat.owner,
+    });
 }
 
 export const checkToken = async(req,res)=>{
@@ -122,7 +116,7 @@ export const checkToken = async(req,res)=>{
             return res.status(410).json({ message: 'Token has expired' });
         }
 
-        return res.status(200).json({ message: 'Token is valid', roomName: room.roomName, participants: room.participants });
+        return res.status(200).json({ message: 'Success', roomName: room.roomName, participants: room.participants });
     } catch (error) {
         console.error('Error checking token:', error);
         return res.status(500).json({ message: 'Internal server error' });
