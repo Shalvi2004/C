@@ -7,13 +7,21 @@ export const getRoomsByOwner = async (req, res) => {
     }
 
     try {
-        const rooms = await Chat.find({ owner: ownerId });
-        console.log(rooms);
+        // Only fetch rooms that have a token and where the token has not expired
+        const now = new Date();
+        const rooms = await Chat.find({
+            owner: ownerId,
+            token: { $exists: true, $ne: null },
+            tokenExpiresAt: { $gt: now }
+        }).sort({ createdAt: -1 });
+
+        // Map to minimal safe payload
         const data = rooms.map(room => ({
             roomName: room.roomName,
-            participantsCount: room.participants.length,
+            participantsCount: Array.isArray(room.participants) ? room.participants.length : 0,
             id: room._id,
         }));
+
         return res.json(data);
     } catch (error) {
         console.error('Error fetching rooms by owner:', error);

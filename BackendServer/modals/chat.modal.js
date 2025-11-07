@@ -40,5 +40,9 @@ const chatSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// TTL index: MongoDB will automatically remove documents once `tokenExpiresAt` is older than now.
+// expireAfterSeconds: 0 means expire at the time specified in the field.
+chatSchema.index({ tokenExpiresAt: 1 }, { expireAfterSeconds: 0 });
+
 export const Chat = mongoose.model("Chat", chatSchema);
 
