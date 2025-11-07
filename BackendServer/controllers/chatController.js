@@ -116,7 +116,7 @@ export const checkToken = async(req,res)=>{
             return res.status(410).json({ message: 'Token has expired' });
         }
 
-        return res.status(200).json({ message: 'Token is valid', roomName: room.roomName, participants: room.participants });
+        return res.status(200).json({ message: 'Success', roomName: room.roomName, participants: room.participants });
     } catch (error) {
         console.error('Error checking token:', error);
         return res.status(500).json({ message: 'Internal server error' });
