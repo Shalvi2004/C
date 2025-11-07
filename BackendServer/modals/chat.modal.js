@@ -34,7 +34,6 @@ const chatSchema = new mongoose.Schema(
       tokenExpiresAt: {
         type: Date,
         required: true,
-        index: true,
       },
   },
   { timestamps: true }

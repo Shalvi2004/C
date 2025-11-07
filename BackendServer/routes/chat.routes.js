@@ -10,6 +10,5 @@ router.post('/chat/room', isUserAuthenticated, chatController);
 
 // Verify a room token
 router.post('/chat/token', isUserAuthenticated, checkToken); // legacy path
-router.post('/chat/token/verify', isUserAuthenticated, checkToken);
 
 export default router;  

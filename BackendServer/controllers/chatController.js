@@ -24,7 +24,6 @@ export const chatController = async (req,res)=>{
         if (Number.isNaN(pInt) || pInt <= 0) {
             return res.status(400).json({ message: 'participants must be a positive integer when provided as count' });
         }
-        // In production, avoid placeholder participants; we'll use only the owner below.
     }
 
     // Generate token and expiry 
