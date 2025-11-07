@@ -7,14 +7,19 @@ const Private = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // modal state
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [token, setToken] = useState('');
+  const [tokenError, setTokenError] = useState('');
+  const [verifying, setVerifying] = useState(false);
+
   const fetchRooms = async () => {
     setLoading(true);
     setError('');
     try {
       const response = await fetch(API_URL, { method: 'GET', credentials: 'include' });
-      if (response.status !== 200) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (response.status !== 200) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setRooms(data.rooms || data);
     } catch (err) {
@@ -25,18 +30,67 @@ const Private = () => {
     }
   };
 
+  // open modal on button click
   const handleEnterRoom = (roomId) => {
-   console.log(`Entering room with ID: ${roomId}`);
-   //! A token verification component can be added here before entering the room
-   const TOKEN_VERIFICATION_ENDPOINT = `http://localhost:3000/api/v1/chat/room/verify-token?roomId=${roomId}`;
-   //Pass room ID to the endpoint via query parameter and backend give u status signal then u can navigate to the room
-  }
+    setSelectedRoomId(roomId);
+    setToken('');
+    setTokenError('');
+    setShowTokenModal(true);
+  };
+
+  // verify token with backend
+  const handleVerifyToken = async (e) => {
+    e.preventDefault();
+    setTokenError('');
+    if (!token?.trim()) {
+      setTokenError('Token is required.');
+      return;
+    }
+    setVerifying(true);
+    try {
+      // If your backend expects GET with query params:
+      const url = `http://localhost:3000/api/v1/chat/room/verify-token?roomId=${encodeURIComponent(
+        selectedRoomId
+      )}&token=${encodeURIComponent(token)}`;
+
+      // If your backend expects POST instead, switch to method: 'POST' and body: JSON.
+      const res = await fetch(url, {
+        method: 'POST', // change to 'POST' if needed
+        credentials: 'include',
+        headers: {
+          // If POST, use: 'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomId: selectedRoomId, token }), // for POST payloads
+      });
+
+      if (res.status === 200) {
+        // Success: close modal and navigate
+        setShowTokenModal(false);
+        // Replace with your router navigation (e.g., react-router)
+        navigate('./Chat')
+        return;
+      }
+
+      if (res.status === 401 || res.status === 403) {
+        setTokenError('Invalid or expired token. Please try again.');
+        return;
+      }
+
+      const text = await res.text();
+      setTokenError(text || `Verification failed with status ${res.status}.`);
+    } catch (err) {
+      console.error('Token verification failed:', err);
+      setTokenError('Network error while verifying token.');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   useEffect(() => {
     fetchRooms();
   }, []);
 
-  // Skeleton loader for a modern feel (glassy, dark, subtle ring)
   const SkeletonCard = () => (
     <div className="w-80 rounded-3xl border border-gray-800/60 bg-gray-900/60 backdrop-blur-md p-6 shadow-xl ring-1 ring-indigo-500/10">
       <div className="h-5 w-44 animate-pulse rounded bg-gray-800 mb-3" />
@@ -58,8 +112,9 @@ const Private = () => {
         <div className="relative z-10 mx-auto grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <SkeletonCard />
           <SkeletonCard />
-          <SkeletonCard />
         </div>
+
+        {/* Token modal while loading not shown */}
       </section>
     );
   }
@@ -114,7 +169,6 @@ const Private = () => {
       {/* Grid */}
       <div className="relative z-10 mx-auto grid max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {rooms.length === 0 ? (
-          // Empty state (glassy dashed card)
           <div className="col-span-full">
             <div className="rounded-3xl border border-dashed border-gray-700/60 bg-gray-900/50 p-12 text-center backdrop-blur-md ring-1 ring-indigo-500/10">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 text-gray-300">
@@ -168,6 +222,72 @@ const Private = () => {
           ))
         )}
       </div>
+
+      {/* Token Modal */}
+      {showTokenModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Enter Access Token</h3>
+              <button
+                onClick={() => setShowTokenModal(false)}
+                className="rounded-full p-1 text-gray-400 hover:text-gray-200"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleVerifyToken}>
+              <label className="block text-sm text-gray-300 mb-2">Token</label>
+              <input
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="Paste your room token"
+                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 outline-none focus:border-indigo-500"
+                autoFocus
+              />
+              {tokenError && (
+                <p className="mt-2 text-sm text-red-400">{tokenError}</p>
+              )}
+
+              <div className="mt-5 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowTokenModal(false)}
+                  className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={verifying}
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 disabled:opacity-60"
+                >
+                  {verifying ? (
+                    <>
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25" />
+                        <path d="M4 12a8 8 0 0 1 8-8" strokeWidth="4" className="opacity-75" />
+                      </svg>
+                      Verifying…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                      Verify & Enter
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -42,7 +42,7 @@ export default function CreateToken() {
       params.set('roomName', roomName.trim());
       params.set('participants', String(parseInt(participants, 10)));
       const url = `${API_TOKEN_ENDPOINT}?${params.toString()}`;
-  const res = await fetch(url, { method: 'GET', credentials: 'include' });
+      const res = await fetch(url, { method: 'GET', credentials: 'include' });
       if (res.status === 401) {
         navigate('/login');
         return;
@@ -57,7 +57,6 @@ export default function CreateToken() {
       setToken(serverToken);
     } catch (err) {
       setError(err?.message || 'Failed to generate token');
-      console.log("Error from my side");
     } finally {
       setLoading(false);
     }
@@ -67,7 +66,7 @@ export default function CreateToken() {
     if (!token) return;
     try {
       await navigator.clipboard.writeText(token);
-      setCopied(true);
+      setCopied(true);~
       setToken('');
       setTimeout(() => setCopied(false), 2000);
       navigate('/Main');
